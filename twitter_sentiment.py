@@ -55,10 +55,10 @@ now=datetime.datetime.utcnow().strftime('%Y_%m_%d')
 
 # Consumer keys and access tokens, used for OAuth
 
-consumer_key = "jCuMds8hkjry8JV8JDEuDVH9o"
-consumer_secret = "psgKB7nb05kZqoD2ZFPrG78OqbObHySWUEhcLFcZ03qVMlsCwp"
-access_token = "814999527451148288-PVho6BBmmcQbSVKOHBt3E5jbPJM6Krl"
-access_token_secret = "a30jMaE70P2kefPFOzrfGTlA06okUcifkjJB9g2JWq4Ih"
+consumer_key = " "
+consumer_secret = " "
+access_token = " "
+access_token_secret = " "
 
 # OAuth process, using the keys and tokens
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
