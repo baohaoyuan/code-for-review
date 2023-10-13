@@ -23,18 +23,15 @@ def data_prep(mycsv, col):
     visit = pd.read_csv(mycsv, skiprows = 15,names = col, delimiter = ',',index_col=False)  
     df = visit.iloc[:,:7]
     df.iloc[[5,6]].round(2)
+    df['Pre'] = 1
     df['Agree/Pre'] = df['PPAgree']/df['PreVisits']
     df['Post/Agree'] = df['PostStorefront']/df['PPAgree']
     df['Orders/Post'] = df['ThankYou(Hit)']/df['PostStorefront']
     df = df.transpose()
     df.to_csv(mycsv[0:-4]+'_out.csv', encoding='utf-8', sep=',')
     if os.path.exists(mycsv[0:-4]+'_out.csv'):
-        df.to_csv(mycsv[0:-4]+'_out2.csv', encoding='utf-8', sep=',')
-    if os.path.exists(mycsv[0:-4]+'_out2.csv'):
-        df.to_csv(mycsv[0:-4]+'_out2.csv', encoding='utf-8', sep=',')
-    if os.path.exists(mycsv[0:-4]+'_out2.csv'):
-        df.to_csv(mycsv[0:-4]+'_out3.csv', encoding='utf-8', sep=',') 
-
+        os.remove(mycsv[0:-4]+'_out.csv')
+        df.to_csv(mycsv[0:-4]+'_out.csv', encoding='utf-8', sep=',')
     '''
     try:
         df.to_csv(mycsv[0:-4]+'_out.csv', encoding='utf-8', sep=',')
@@ -42,5 +39,6 @@ def data_prep(mycsv, col):
         df.to_csv(mycsv[0:-4]+'_out2.csv', encoding='utf-8', sep=',')
     '''
 
-for i in inFile:
-    data_prep(i, col)
+if __name__ == "__main__":
+    for i in inFile:
+        data_prep(i, col)
