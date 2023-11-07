@@ -1,0 +1,229 @@
+--Random tests 
+/*
+
+in step 1: get the original count of books for each author. 
+in step 2: get the count of books and count of store_ids based on the store_availability foreach author
+
+in step 3: compare the book count and store count for the same author. If the book count is different in step 1 and step 2 and store count is different from the all the count of stores, don't return these authors; namely, only return the authors that book counts are the same and store count equals to count of stores from the stores table.*/
+
+SELECT
+  x.AUTHORID, COUNT (DISTINCT y.STOREID)
+FROM
+
+(
+  SELECT
+    AUTHORID, COUNT(*) AS abcnt
+  FROM BOOK
+  GROUP BY 1
+) x
+
+JOIN
+(
+  SELECT
+    B.AUTHORID, BA.STOREID, COUNT(DISTINCT BOOKID) AS ascnt
+  FROM
+    BOOKAVAIL BA
+  JOIN
+    BOOK B
+  ON
+    B.BOOKID = BA.BOOKID
+  GROUP BY 1, 2
+) y
+
+ON
+  x.abcnt = y.ascent
+and x.authorid = y.authorid  
+GROUP BY x.AUTHORID
+HAVING COUNT (DISTIBCT y.STOREID) = SELECT COUNT(STOREID) FROM STORE
+
+
+/**
+
+
+events
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| s_id  | int(11)     | NO   | PRI | NULL    |       |
+| ts    | int(11)     | NO   | PRI | NULL    |       |
+| ev    | varchar(20) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+
+**/
+
+/**
+Suppose we have a message forum where we track user sessions.
+Each session has a unique ID `s_id` and comprises a series of events.
+Each event `ev` has a corresponding timestamp `ts`.
+Each event `ev` is one of the following strings:
+
+- "login"
+- "read_post"
+- "write_post"
+- "comment"
+- "search"
+- "logout"
+- "error"
+
+Each session should start with the "login" `ev`.
+
+If the user successfully logged out at the end of the session,
+the session ends in the "logout" `ev`.
+
+Some sessions do not have a successful logout at the end.
+Those sessions end in the "error" `ev`.
+
+A sample of the data is depicted below:
+
+ s_id | ts  |    ev    
+------+-----+-----------
+    1 |   1 | login
+    1 |  16 | read_post
+    2 |  32 | login
+    1 |  54 | comment
+    3 |  71 | login
+    1 |  83 | logout
+    4 | 105 | login
+  ... | ... | ...
+
+Using your preferred programming language (Python / R / SQL / other)
+and this forum data, we will answer some questions.
+**/
+
+/** Question 1: Write a query or function to get the first event `ev`
+  * for each session `s_id`. Are they all `login` events?
+  */
+ 
+ with rk as
+  (select s_id, ev, rank() over (partition by s_id order by ts ) as rnk
+  from events
+  )
+  select * FROM rk
+  where rnk = 1
+ 
+/** Question 2: Write a query or function to determine, for each session,
+  * what was the last event, and what happened immediately BEFORE
+  * the last event.
+  *
+  * Is there a common previous event before all "error" events?
+  */
+ 
+  with last_details as
+ ( select s_id, ev, row_number() over(partition by s_id order by ts desc) as rn,
+ lag(ev) over (partition by s_id order by ts asc) as before_event
+  from events)
+ 
+  select *
+  from last_details
+  where rn = 1
+
+
+
+
+ -- Assume you’ve been approached by a HR executive who wants to produce a report containing for all departments in their company
+-- Department Name
+-- Number of Employees
+-- Department’s median salary
+-- % of the department’s salary paid to males
+
+-- Design a data model and write SQL in support of producing this report.
+
+table for department
+dept_id, dept_nm
+
+table for employee with salary
+
+emp_id, dept_id, salary (yearly), gender, mgr_id
+
+select d.dept_nm as department_name, count(distinct e.employee_id) as emp_number
+, perentile_dis(0.5) within group (order by salary) as meidan_salary
+,sum(case when gender ='M' then salary else 0 end)/sum(salary) as pct_male_sal
+from department d
+left join employees e
+on d.dept_id = e.dept_id
+group by 1
+having emp_number>=100
+
+-- Return only departments with at least 100 employees
+
+-- List all employees who earn more than the average salary for their department
+
+with avg_sal as
+select dept_id, avg(salary) as avg_sal
+from department d
+left join employees e
+on d.dept_id = e.dept_id
+group by dept_id
+
+select distinct employee_id
+from employees e
+left join avg_sal
+on d.dept_id = e.dept_id
+where salary > avg_sal
+
+
+-- Find employees who earn more than their (direct) manager
+
+select distinct employee_id, e1.salary as emp_sal, e2.salary as mgr_sal  
+from employee e1
+left join
+employee e2
+on e1.mgr_id = e2.employee_id
+where e1.salaray >  e2.salary
+
+
+
+employee report          employee manager
+mgr_id <-----------------> employee_id
+
+
+
+with max_discount as
+(select category, product_id, max(discount)  as max_disc 
+from product
+group by category, product_id)
+
+select category, product_id,max_disc 
+from 
+    (select category, product_id, max_disc,
+    row_number() over(partition by category order by max_disc desc) as rn
+    from max_discount) a
+where rn =1
+order by 1
+
+
+
+
+with votes as
+(select party, constituency_id, sum(votes) as total_votes
+from candidates c
+join results r
+on c.id = r.candidate_id
+group by 1, 2)
+
+select party, count(distinct constituency_id)
+from (select * from 
+
+        (select party, constituency_id,
+        rank() over(partition by constituency_id order by total_votes desc) as rk
+        from votes) a
+        where rk=1) b
+group by party;
+
+
+-- HOw many customers first purchase in the txns table was for the leagure NFL
+  
+select count(a.customer_id) as cust_cnt
+ from
+(select customer_id, league, 
+row_number() over (partition by customer_id order by order_date)  as rn
+from transactions) a
+where rn = 1 and league = 'NFL'
+
+
+--
+SELECT Organisation, [Year], Revenue,
+LAG (Revenue, 1, 0) 
+OVER (PARTITION BY Organisation ORDER BY [Year]) AS PrevYearRevenue  
+FROM Org 
+ORDER BY Organisation, [Year]; 
